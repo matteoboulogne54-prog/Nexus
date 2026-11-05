@@ -1,0 +1,17 @@
+{
+  "name": "nexus-netlify-functions",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.1.1",
+    "groq-sdk": "^0.5.0",
+    "resend": "^3.4.0",
+    "@supabase/supabase-js": "^2.43.4"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.33.1"
+  }
+}

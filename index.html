@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>NEXUS Business Manager Pro</title>
+<!-- Tailwind CSS via CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Configuration Tailwind custom -->
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50: '#ecfeff',
+            100: '#cffaff',
+            200: '#a5f3fc',
+            300: '#67e8f9',
+            400: '#22d3ee',
+            500: '#06b6d4',
+            600: '#0891b2',
+            700: '#0e7490',
+            800: '#155e75',
+            900: '#164e63',
+            950: '#083344',
+          },
+          darkbg: '#090d16',
+          darkcard: '#111827',
+          darkcard2: '#1f2937',
+          darkborder: '#1f293d',
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+<!-- Font Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- html2pdf.js : génération de PDF téléchargeables (Devis & Factures) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Scrollbar stylisée */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.2);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.4);
+  }
+
+  /* Effets Glassmorphism */
+  .glass {
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .light .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px -3px rgba(34, 211, 238, 0.3);
+  }
+  .glow-cyan:hover {
+    box-shadow: 0 0 25px 0px rgba(34, 211, 238, 0.5);
+  }
+
+  /* Toast notification animation */
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .toast-anim {
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+</style>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Application Container -->
+  <div class="flex-1 flex flex-col min-h-screen">
+    
+    <!-- Header principal -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-darkbg/80 backdrop-blur-md transition-colors duration-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16 gap-4">
+          
+          <!-- Logo & Marque -->
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center text-slate-950 shadow-lg shadow-brand-500/20 font-black text-xl tracking-wider">
+              N
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-brand-300 bg-clip-text text-transparent">NEXUS</span>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">PRO</span>
+              </div>
+              <p class="text-[10px] text-slate-400 hidden sm:block">Business Suite Manager</p>
+            </div>
+          </div>
+
+          <!-- Status Firebase Sync & Controls -->
+          <div class="flex items-center gap-3">
+            <!-- Badge Sync -->
+            <div id="sync-status-badge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-900/80 border border-slate-800 text-slate-400 transition-all duration-300">
+              <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span id="sync-status">Connexion Firebase...</span>
+            </div>
+
+            <!-- Dark / Light Theme Toggle -->
+            <button id="theme-toggle" class="p-2 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800 transition-all" title="Changer le thème">
+              <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+              <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Onglets Responsive -->
+    <div class="border-b border-slate-800/80 bg-slate-950/40 backdrop-blur-md sticky top-16 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav id="nav" class="flex items-center gap-1.5 overflow-x-auto py-2.5 no-scrollbar">
+          <!-- Injecté dynamiquement en JS -->
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main id="main" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all duration-300">
+      <!-- Le contenu dynamique sera généré ici -->
+    </main>
+
+    <!-- Footer minimaliste -->
+    <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+      <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <p>© 2026 NEXUS Business Manager. Tous droits réservés.</p>
+        <p class="text-slate-600">Base de données cloud synchronisée & sécurisée.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Conteneur de Toasts pour notifications -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Firebase & Logic Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEWJVXifrqT71Dvb67X7H25i0Br9XxcOU",
+      authDomain: "nexus-532ba.firebaseapp.com",
+      databaseURL: "https://nexus-532ba-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "nexus-532ba",
+      storageBucket: "nexus-532ba.firebasestorage.app",
+      messagingSenderId: "865575913055",
+      appId: "1:865575913055:web:721a81a4934acc17febdea",
+      measurementId: "G-5WVNJLHFPR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'nexus_data');
+
+    // Navigation Tabs Configuration with Icons
+    const TABS = [
+      { id: "Dashboard", label: "Tableau de bord", icon: "layout-dashboard" },
+      { id: "CRM", label: "CRM Clients", icon: "users" },
+      { id: "Catalogue", label: "Prestations", icon: "shopping-bag" },
+      { id: "Devis", label: "Devis", icon: "file-text" },
+      { id: "Commandes", label: "Commandes", icon: "package" },
+      { id: "Factures", label: "Factures", icon: "receipt" },
+      { id: "Finance", label: "Finances", icon: "wallet" },
+      { id: "Stats", label: "Statistiques", icon: "bar-chart-3" },
+      { id: "Emails", label: "Relances & E-mails", icon: "mail" },
+      { id: "Sauvegarde", label: "Sauvegarde", icon: "database" }
+    ];
+
+    const STAGES = ["Nouveau prospect","Contact établi","Besoin identifié","Devis envoyé","Négociation","Client gagné","Client perdu"];
+    const ORDER_STATUSES = ["Nouvelle commande","À planifier","En production","En vérification","En attente du client","Livrée","Terminée","Annulée"];
+    const QUOTE_STATUSES = ["Brouillon","Envoyé","Accepté","Refusé","Expiré"];
+    const DEFAULT_ORDER_STEPS = ["Cahier des charges validé","Développement / Configuration","Tests & vérifications","Livraison au client","Retour client validé"];
+
+    const DEFAULT_PRODUCTS = [
+     {id:"p1",cat:"Discord Server Setup",name:"Starter",price:12.5,desc:"Organisation des catégories et salons • Configuration de 5 rôles maximum • Permissions de base • Message de bienvenue"},
+     {id:"p2",cat:"Discord Server Setup",name:"Professional",price:22.5,desc:"Tout le pack Starter • Jusqu'à 15 rôles • Configuration de bots existants • Règlement et FAQ • Système de tickets simple"},
+     {id:"p3",cat:"Discord Server Setup",name:"Advanced",price:35,desc:"Tout le pack Professional • Permissions avancées • Logs et modération • Accueil personnalisé • Tests et vérifications"},
+     {id:"p4",cat:"Discord Bot Development",name:"Bot Starter",price:20,desc:"Bot personnalisé • Jusqu'à 3 commandes slash simples • Configuration des permissions • Installation et tests"},
+     {id:"p5",cat:"Discord Bot Development",name:"Bot Advanced",price:32.5,desc:"Jusqu'à 6 commandes • Système de logs • Automatisations simples • Intégration Firebase si nécessaire • Tests et documentation"},
+     {id:"p6",cat:"Discord Bot Development",name:"Bot Custom (à partir de)",price:45,desc:"Développement sur cahier des charges • Systèmes de statistiques • Automatisations personnalisées • Intégrations de bases de données • Architecture adaptée aux besoins"},
+     {id:"p7",cat:"Options",name:"Installation bot existant",price:2.5,desc:""},
+     {id:"p8",cat:"Options",name:"Règlement personnalisé",price:4,desc:""},
+     {id:"p9",cat:"Options",name:"Système de tickets",price:6,desc:""},
+     {id:"p10",cat:"Options",name:"Logs avancés",price:7.5,desc:""},
+     {id:"p11",cat:"Options",name:"Embed personnalisé",price:4,desc:""},
+     {id:"p12",cat:"Options",name:"Commande simple supplémentaire",price:5,desc:""},
+     {id:"p13",cat:"Options",name:"Commande complexe",price:0,desc:"Sur devis — à chiffrer au cas par cas"},
+     {id:"p14",cat:"Options",name:"Maintenance mensuelle",price:5,desc:"5 à 10 € selon le périmètre"},
+    ];
+
+    let state = {clients:[],products:JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)),quotes:[],orders:[],transactions:[],invoices:[]};
+    let active = "Dashboard";
+    let expandedOrders = new Set();
+
+    function makeDefaultSteps(){
+      return DEFAULT_ORDER_STEPS.map(label => ({ id: uid("step-"), label, done: false }));
+    }
+    // Rétro-compatibilité : initialise les étapes de suivi pour les commandes créées avant cette fonctionnalité
+    function ensureOrderSteps(o){
+      if(!o.steps || !Array.isArray(o.steps)) o.steps = makeDefaultSteps();
+      return o.steps;
+    }
+    
+    const syncStatusEl = document.getElementById("sync-status");
+    const syncDotEl = document.getElementById("sync-dot");
+
+    // Theme Toggle Functionality
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      if (document.documentElement.classList.contains('dark')) {
+        document.body.classList.remove('bg-slate-50', 'text-slate-900');
+        document.body.classList.add('bg-darkbg', 'text-slate-100');
+      } else {
+        document.body.classList.remove('bg-darkbg', 'text-slate-100');
+        document.body.classList.add('bg-slate-50', 'text-slate-900');
+      }
+    });
+
+    // Toast Notifications System
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const bgColors = {
+        success: 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200',
+        error: 'bg-rose-950/90 border-rose-500/50 text-rose-200',
+        info: 'bg-slate-900/90 border-brand-500/50 text-brand-200'
+      };
+
+      const icons = {
+        success: 'check-circle-2',
+        error: 'alert-triangle',
+        info: 'info'
+      };
+
+      toast.className = `toast-anim pointer-events-auto flex items-center gap-3 p-4 rounded-xl border backdrop-blur-md shadow-xl text-sm font-medium ${bgColors[type] || bgColors.info}`;
+      toast.innerHTML = `
+        <i data-lucide="${icons[type] || 'info'}" class="w-5 h-5 shrink-0"></i>
+        <span class="flex-1">${message}</span>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'scale(0.95)';
+        toast.style.transition = 'all 0.2s ease-out';
+        setTimeout(() => toast.remove(), 200);
+      }, 3500);
+    }
+
+    // Firebase Listener
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if(data) {
+        state = {
+          clients: data.clients || [],
+          products: data.products && data.products.length ? data.products : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)),
+          quotes: data.quotes || [],
+          orders: data.orders || [],
+          transactions: data.transactions || [],
+          invoices: data.invoices || []
+        };
+        try { localStorage.setItem("nexus_data", JSON.stringify(state)); } catch(e){}
+        updateSyncStatus("Synchronisé (Firebase)", "bg-emerald-400");
+      } else {
+        let s = null;
+        try{ s = JSON.parse(localStorage.getItem("nexus_data")); }catch(e){}
+        if(s) state = s;
+        save();
+        updateSyncStatus("Initialisé (Firebase)", "bg-emerald-400");
+      }
+      render();
+    }, (error) => {
+      console.warn("Erreur de connexion Firebase, utilisation du cache local :", error);
+      updateSyncStatus("Hors ligne (Local)", "bg-amber-400");
+      let s = null;
+      try{ s = JSON.parse(localStorage.getItem("nexus_data")); }catch(e){}
+      if(!s) s = {clients:[],products:JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)),quotes:[],orders:[],transactions:[],invoices:[]};
+      state = s;
+      render();
+    });
+
+    function updateSyncStatus(text, dotColorClass) {
+      syncStatusEl.textContent = text;
+      syncDotEl.className = `w-2 h-2 rounded-full ${dotColorClass}`;
+    }
+
+    function save(quiet = false){
+      try {
+        localStorage.setItem("nexus_data", JSON.stringify(state));
+        set(dbRef, state).then(() => {
+          updateSyncStatus("Enregistré", "bg-emerald-400");
+          if (!quiet) showToast("Modifications synchronisées", "success");
+          setTimeout(() => { updateSyncStatus("Synchronisé (Firebase)", "bg-emerald-400"); }, 2000);
+        }).catch(err => {
+          console.error("Erreur d'écriture Firebase:", err);
+          updateSyncStatus("Erreur sync", "bg-rose-500");
+          showToast("Erreur de synchronisation Firebase", "error");
+        });
+      } catch(e) {
+        showToast("Erreur de sauvegarde locale", "error");
+      }
+    }
+
+    function uid(p){ return p+Math.random().toString(36).slice(2,9); }
+    function eur(n){ return (Number(n)||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}); }
+    function today(){ return new Date().toISOString().slice(0,10); }
+
+    /* ==========================================================================
+       GÉNÉRATION PDF (Devis & Factures) — téléchargement direct, sans e-mail
+       ========================================================================== */
+
+    // Template HTML réutilisé pour générer le PDF d'une FACTURE
+    function invoiceTemplateHTML(inv, cl){
+      return `
+        <div style="font-family:'Helvetica Neue', Arial, sans-serif; color:#1e293b; background:#ffffff; padding:40px; width:210mm; box-sizing:border-box; line-height:1.5;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #e2e8f0; padding-bottom:20px; margin-bottom:30px;">
+            <div>
+              <div style="font-size:24px; font-weight:800; color:#0284c7; letter-spacing:-0.5px;">NEXUS Business</div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">Services &amp; Solutions Digitales</div>
+            </div>
+            <div>
+              <div style="font-size:28px; font-weight:800; color:#0f172a; text-align:right;">FACTURE</div>
+              <div style="font-size:13px; color:#64748b; text-align:right; font-weight:600;"># ${inv.id}</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; margin-bottom:40px;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:15px 20px; width:45%;">
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:8px;">Facturé à :</div>
+              <div style="font-weight:700; font-size:14px;">${cl ? cl.name : "Client Inconnu"}</div>
+              ${cl && cl.company ? `<div>${cl.company}</div>` : ""}
+              ${cl && cl.email ? `<div>${cl.email}</div>` : ""}
+            </div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:15px 20px; width:45%;">
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:8px;">Informations de règlement :</div>
+              <div><strong>Date d'émission :</strong> ${inv.dateIssued}</div>
+              <div><strong>Date d'échéance :</strong> ${inv.dueDate}</div>
+              <div><strong>Statut :</strong> ${inv.status}</div>
+            </div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:30px;">
+            <thead>
+              <tr>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:left; border-bottom:1px solid #cbd5e1;">Désignation de la prestation</th>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:center; border-bottom:1px solid #cbd5e1;">Quantité</th>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:right; border-bottom:1px solid #cbd5e1;">Prix unitaire</th>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:right; border-bottom:1px solid #cbd5e1;">Total HT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inv.items.map(it => `
+                <tr>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155;">${it.name}</td>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155; text-align:center;">${it.qty}</td>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155; text-align:right;">${eur(it.price)}</td>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155; text-align:right;">${eur(it.price * it.qty)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="font-size:18px; font-weight:800; color:#0f172a; text-align:right; margin-top:20px; border-top:2px solid #0f172a; padding-top:10px;">
+            Total à payer : ${eur(inv.total)}
+          </div>
+
+          <div style="font-size:11px; color:#94a3b8; text-align:center; margin-top:60px; border-top:1px solid #e2e8f0; padding-top:20px;">
+            NEXUS Business Suite • Merci de votre confiance • Contact : waoxo@iceberg-review.com
+          </div>
+        </div>
+      `;
+    }
+
+    // Template HTML réutilisé pour générer le PDF d'un DEVIS
+    function quoteTemplateHTML(q, cl){
+      const total = quoteTotal(q);
+      const rawTotal = q.items.reduce((a,it)=>a+it.price*it.qty,0);
+      return `
+        <div style="font-family:'Helvetica Neue', Arial, sans-serif; color:#1e293b; background:#ffffff; padding:40px; width:210mm; box-sizing:border-box; line-height:1.5;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #e2e8f0; padding-bottom:20px; margin-bottom:30px;">
+            <div>
+              <div style="font-size:24px; font-weight:800; color:#0284c7; letter-spacing:-0.5px;">NEXUS Business</div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">Services &amp; Solutions Digitales</div>
+            </div>
+            <div>
+              <div style="font-size:28px; font-weight:800; color:#0f172a; text-align:right;">DEVIS</div>
+              <div style="font-size:13px; color:#64748b; text-align:right; font-weight:600;"># ${q.id}</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; margin-bottom:40px;">
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:15px 20px; width:45%;">
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:8px;">Devis pour :</div>
+              <div style="font-weight:700; font-size:14px;">${cl ? cl.name : "Client Inconnu"}</div>
+              ${cl && cl.company ? `<div>${cl.company}</div>` : ""}
+              ${cl && cl.email ? `<div>${cl.email}</div>` : ""}
+              ${cl && cl.discord ? `<div>Discord : ${cl.discord}</div>` : ""}
+            </div>
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:15px 20px; width:45%;">
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:8px;">Informations du devis :</div>
+              <div><strong>Date d'émission :</strong> ${q.date || "—"}</div>
+              <div><strong>Valable jusqu'au :</strong> ${q.expiry || "—"}</div>
+              <div><strong>Statut :</strong> ${q.status}</div>
+            </div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+            <thead>
+              <tr>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:left; border-bottom:1px solid #cbd5e1;">Désignation de la prestation</th>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:center; border-bottom:1px solid #cbd5e1;">Quantité</th>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:right; border-bottom:1px solid #cbd5e1;">Prix unitaire</th>
+                <th style="background:#f1f5f9; font-size:11px; text-transform:uppercase; color:#475569; padding:10px; text-align:right; border-bottom:1px solid #cbd5e1;">Total HT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${q.items.map(it => `
+                <tr>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155;">${it.name}</td>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155; text-align:center;">${it.qty}</td>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155; text-align:right;">${eur(it.price)}</td>
+                  <td style="padding:12px 10px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#334155; text-align:right;">${eur(it.price * it.qty)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          ${q.discount ? `
+            <div style="text-align:right; font-size:13px; color:#64748b; margin-bottom:6px;">Sous-total : ${eur(rawTotal)}</div>
+            <div style="text-align:right; font-size:13px; color:#0284c7; margin-bottom:6px;">Remise (${q.discount}%) : -${eur(rawTotal - total)}</div>
+          ` : ""}
+
+          <div style="font-size:18px; font-weight:800; color:#0f172a; text-align:right; margin-top:14px; border-top:2px solid #0f172a; padding-top:10px;">
+            Montant total : ${eur(total)}
+          </div>
+
+          <div style="font-size:11px; color:#94a3b8; text-align:center; margin-top:60px; border-top:1px solid #e2e8f0; padding-top:20px;">
+            NEXUS Business Suite • Devis valable jusqu'à la date indiquée ci-dessus • Contact : waoxo@iceberg-review.com
+          </div>
+        </div>
+      `;
+    }
+
+    // Génère et télécharge un vrai fichier PDF à partir d'un bout de HTML
+    function downloadPDF(innerHtml, filename){
+      if(typeof html2pdf === "undefined"){
+        showToast("Bibliothèque PDF non chargée (vérifiez votre connexion internet).", "error");
+        return;
+      }
+      showToast("Génération du PDF en cours...", "info");
+
+      const wrapper = document.createElement("div");
+      wrapper.style.cssText = "position:fixed; left:-10000px; top:0; z-index:-1;";
+      wrapper.innerHTML = innerHtml;
+      document.body.appendChild(wrapper);
+
+      const opt = {
+        margin: 0,
+        filename: filename,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      };
+
+      html2pdf().set(opt).from(wrapper).save().then(() => {
+        wrapper.remove();
+        showToast("PDF téléchargé avec succès !", "success");
+      }).catch(() => {
+        wrapper.remove();
+        showToast("Erreur lors de la génération du PDF.", "error");
+      });
+    }
+
+    // Render Navigation Tabs
+    function renderNav(){
+      const nav = document.getElementById("nav");
+      nav.innerHTML = "";
+      TABS.forEach(t => {
+        const isActive = t.id === active;
+        const b = document.createElement("button");
+        b.className = `flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+          isActive 
+            ? "bg-brand-500/10 text-brand-300 border border-brand-500/30 shadow-md shadow-brand-500/5 glow-cyan" 
+            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent"
+        }`;
+        b.innerHTML = `<i data-lucide="${t.icon}" class="w-4 h-4 ${isActive ? 'text-brand-400' : 'text-slate-400'}"></i>${t.label}`;
+        b.onclick = () => { active = t.id; render(); };
+        nav.appendChild(b);
+      });
+      lucide.createIcons();
+    }
+
+    // Render Engine
+    function render(){
+      renderNav();
+      const m = document.getElementById("main");
+      m.innerHTML = "";
+      
+      const renderers = {
+        Dashboard: renderDashboard,
+        CRM: renderCRM,
+        Catalogue: renderCatalogue,
+        Devis: renderDevis,
+        Commandes: renderCommandes,
+        Factures: renderFactures,
+        Finance: renderFinance,
+        Stats: renderStats,
+        Emails: renderEmails,
+        Sauvegarde: renderBackup
+      };
+
+      if (renderers[active]) {
+        renderers[active](m);
+      }
+      lucide.createIcons();
+    }
+
+    // Wrapper pour cartes uniformes
+    function createCard(title, subtitle = "") {
+      const c = document.createElement("div");
+      c.className = "bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 sm:p-6 mb-6 shadow-xl backdrop-blur-md transition-all duration-200 hover:border-slate-700/80";
+      if(title){
+        const header = document.createElement("div");
+        header.className = "mb-5 pb-3 border-b border-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-1";
+        header.innerHTML = `
+          <div>
+            <h2 class="text-base font-bold text-slate-100 tracking-tight flex items-center gap-2">${title}</h2>
+            ${subtitle ? `<p class="text-xs text-slate-400 mt-0.5">${subtitle}</p>` : ''}
+          </div>
+        `;
+        c.appendChild(header);
+      }
+      return c;
+    }
+
+    /* ==========================================================================
+       1. DASHBOARD
+       ========================================================================== */
+    function renderDashboard(m){
+      const clients = state.clients.filter(c=>c.stage==="Client gagné");
+      const prospects = state.clients.filter(c=>c.stage!=="Client gagné" && c.stage!=="Client perdu");
+      const encaisse = state.transactions.filter(t=>t.type==="revenu").reduce((a,t)=>a+Number(t.amount),0);
+      const depenses = state.transactions.filter(t=>t.type==="dépense").reduce((a,t)=>a+Number(t.amount),0);
+      const facture = state.orders.reduce((a,o)=>a+Number(o.price||0),0);
+      const encours = state.orders.filter(o=>!["Terminée","Annulée","Livrée"].includes(o.status)).length;
+      const devisEnAttente = state.quotes.filter(q=>q.status==="Envoyé").length;
+      const resultat = encaisse - depenses;
+
+      const c = createCard("Vue d'ensemble", "Performances clés de votre entreprise en un coup d'œil");
+      
+      const g = document.createElement("div"); 
+      g.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
+
+      const kpis = [
+        { label: "Clients Actifs", val: clients.length, icon: "user-check", color: "from-emerald-500/20 to-teal-500/5 text-emerald-400 border-emerald-500/30" },
+        { label: "Prospects en cours", val: prospects.length, icon: "user-plus", color: "from-blue-500/20 to-indigo-500/5 text-blue-400 border-blue-500/30" },
+        { label: "Devis Envoyés", val: devisEnAttente, icon: "send", color: "from-amber-500/20 to-yellow-500/5 text-amber-400 border-amber-500/30" },
+        { label: "Commandes Actives", val: encours, icon: "clock", color: "from-purple-500/20 to-indigo-500/5 text-purple-400 border-purple-500/30" },
+        { label: "CA Encaissé", val: eur(encaisse), icon: "dollar-sign", color: "from-emerald-500/20 to-cyan-500/5 text-emerald-400 border-emerald-500/30" },
+        { label: "CA Facturé Total", val: eur(facture), icon: "file-check", color: "from-cyan-500/20 to-blue-500/5 text-cyan-400 border-cyan-500/30" },
+        { label: "Dépenses Totales", val: eur(depenses), icon: "trending-down", color: "from-rose-500/20 to-pink-500/5 text-rose-400 border-rose-500/30" },
+        { label: "Bénéfice Net Estimé", val: eur(resultat), icon: resultat >= 0 ? "arrow-up-right" : "arrow-down-right", color: resultat >= 0 ? "from-emerald-500/20 to-teal-500/5 text-emerald-400 border-emerald-500/30" : "from-rose-500/20 to-red-500/5 text-rose-400 border-rose-500/30" },
+      ];
+
+      kpis.forEach(k => { 
+        const card = document.createElement("div"); 
+        card.className = `p-4 rounded-xl border bg-gradient-to-br ${k.color} flex flex-col justify-between transition-transform duration-200 hover:-translate-y-1`; 
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">${k.label}</span>
+            <div class="p-2 rounded-lg bg-slate-950/40 border border-slate-800">
+              <i data-lucide="${k.icon}" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="text-2xl font-black text-slate-100 tracking-tight">${k.val}</div>
+        `; 
+        g.appendChild(card); 
+      });
+
+      c.appendChild(g); 
+      m.appendChild(c);
+
+      // Activités récentes
+      const recent = createCard("Journal d'Activité Récente", "Dernières actions enregistrées sur la plateforme");
+      const items = [
+        ...state.clients.map(c=>({d:c.dateAdded, t:`Nouveau prospect créé : <strong>${c.name}</strong>`, icon: 'user-plus', color: 'text-blue-400'})),
+        ...state.quotes.map(q=>({d:q.date, t:`Devis <strong>${q.id}</strong> (Statut: ${q.status})`, icon: 'file-text', color: 'text-amber-400'})),
+        ...state.orders.map(o=>({d:o.date, t:`Nouvelle commande <strong>${o.id}</strong>`, icon: 'package', color: 'text-purple-400'})),
+        ...state.transactions.map(t=>({d:t.date, t:`Transaction (${t.type}) : <strong>${eur(t.amount)}</strong>`, icon: t.type==='revenu'?'arrow-down-left':'arrow-up-right', color: t.type==='revenu'?'text-emerald-400':'text-rose-400'})),
+      ].sort((a,b)=>(b.d||"").localeCompare(a.d||"")).slice(0,7);
+
+      if(!items.length) {
+        recent.innerHTML += `<p class="text-xs text-slate-500 italic py-4 text-center">Aucune activité enregistrée pour le moment.</p>`;
+      } else {
+        const listContainer = document.createElement("div");
+        listContainer.className = "divide-y divide-slate-800/50";
+        items.forEach(i=>{
+          const row = document.createElement("div");
+          row.className = "py-3 flex items-center justify-between text-xs text-slate-300 hover:bg-slate-800/30 px-2 rounded-lg transition-colors";
+          row.innerHTML = `
+            <div class="flex items-center gap-3">
+              <i data-lucide="${i.icon}" class="w-4 h-4 ${i.color}"></i>
+              <span>${i.t}</span>
+            </div>
+            <span class="text-[11px] font-mono text-slate-500 bg-slate-950/60 px-2 py-1 rounded border border-slate-800">${i.d||"—"}</span>
+          `;
+          listContainer.appendChild(row);
+        });
+        recent.appendChild(listContainer);
+      }
+      m.appendChild(recent);
+    }
+
+    /* ==========================================================================
+       2. CRM CLIENTS
+       ========================================================================== */
+    function renderCRM(m){
+      const c = createCard("Ajouter un Client / Prospect", "Enregistrez un nouveau contact dans votre base de données");
+      c.innerHTML += `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Nom complet *</label>
+            <input id="cl_name" type="text" placeholder="ex: Alex Morgan" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Entreprise</label>
+            <input id="cl_company" type="text" placeholder="ex: Acme Corp" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Email</label>
+            <input id="cl_email" type="email" placeholder="alex@domain.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Discord / Contact</label>
+            <input id="cl_discord" type="text" placeholder="ex: alex_discord" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Type de client</label>
+            <select id="cl_type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+              <option>Particulier</option>
+              <option>Professionnel</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Source</label>
+            <input id="cl_source" placeholder="ex: Recommandation, Twitter" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Étape du Pipeline</label>
+            <select id="cl_stage" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition-colors">
+              ${STAGES.map(s=>`<option>${s}</option>`).join("")}
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button id="btn-add-client" class="w-full bg-gradient-to-r from-brand-500 to-cyan-500 hover:from-brand-400 hover:to-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center justify-center gap-2 transition-all duration-200 shadow-md shadow-brand-500/20">
+              <i data-lucide="plus" class="w-4 h-4"></i> Ajouter le client
+            </button>
+          </div>
+        </div>
+      `;
+
+      c.querySelector("#btn-add-client").onclick = () => {
+        const name = document.getElementById("cl_name").value.trim();
+        if(!name) return showToast("Le nom du client est requis.", "error");
+        
+        state.clients.push({
+          id: uid("c"),
+          name,
+          company: document.getElementById("cl_company").value.trim(),
+          email: document.getElementById("cl_email").value.trim(),
+          discord: document.getElementById("cl_discord").value.trim(),
+          type: document.getElementById("cl_type").value,
+          source: document.getElementById("cl_source").value.trim(),
+          stage: document.getElementById("cl_stage").value,
+          dateAdded: today(),
+          notes: ""
+        });
+        save();
+        render();
+        showToast(`Client ${name} ajouté avec succès !`, "success");
+      };
+      m.appendChild(c);
+
+      // Liste des clients
+      const list = createCard("Répertoire Clients", "Gestion et suivi des opportunités commerciales");
+      const wrap = document.createElement("div"); 
+      wrap.className = "overflow-x-auto";
+      
+      let rows = `
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
+              <th class="py-3 px-3">Client</th>
+              <th class="py-3 px-3">Contact</th>
+              <th class="py-3 px-3">Type</th>
+              <th class="py-3 px-3">Étape</th>
+              <th class="py-3 px-3">Source</th>
+              <th class="py-3 px-3">Date</th>
+              <th class="py-3 px-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/50">
+      `;
+
+      state.clients.slice().reverse().forEach(cl => {
+        rows += `
+          <tr class="hover:bg-slate-800/30 transition-colors">
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-200">${cl.name}</div>
+              ${cl.company ? `<div class="text-[11px] text-brand-400">${cl.company}</div>` : ""}
+            </td>
+            <td class="py-3 px-3 text-slate-400">
+              ${cl.email ? `<div>${cl.email}</div>` : ""}
+              ${cl.discord ? `<div class="text-[11px] text-slate-500">Discord: ${cl.discord}</div>` : ""}
+              ${!cl.email && !cl.discord ? "—" : ""}
+            </td>
+            <td class="py-3 px-3">
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold border ${cl.type==='Professionnel' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-slate-800 text-slate-300 border-slate-700'}">${cl.type}</span>
+            </td>
+            <td class="py-3 px-3">
+              <select data-id="${cl.id}" class="stageSel bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                ${STAGES.map(s => `<option ${s===cl.stage?"selected":""}>${s}</option>`).join("")}
+              </select>
+            </td>
+            <td class="py-3 px-3 text-slate-400">${cl.source || "—"}</td>
+            <td class="py-3 px-3 text-slate-500 font-mono text-[11px]">${cl.dateAdded}</td>
+            <td class="py-3 px-3 text-right">
+              <button data-id="${cl.id}" class="delC text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all" title="Supprimer">
+                <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      rows += `</tbody></table>`;
+      wrap.innerHTML = rows;
+      list.appendChild(wrap);
+
+      if(!state.clients.length) {
+        list.innerHTML += `<p class="text-xs text-slate-500 italic py-6 text-center">Aucun client enregistré dans le CRM.</p>`;
+      }
+      m.appendChild(list);
+
+      // Listeners table
+      list.querySelectorAll(".stageSel").forEach(s => s.onchange = e => {
+        const client = state.clients.find(c => c.id === e.target.dataset.id);
+        if(client) {
+          client.stage = e.target.value;
+          save();
+        }
+      });
+
+      list.querySelectorAll(".delC").forEach(b => b.onclick = e => {
+        const id = e.target.closest('button').dataset.id;
+        if(confirm("Voulez-vous vraiment supprimer ce client ?")) {
+          state.clients = state.clients.filter(c => c.id !== id);
+          save();
+          render();
+        }
+      });
+    }
+
+    /* ==========================================================================
+       3. CATALOGUE PRESTATIONS
+       ========================================================================== */
+    function renderCatalogue(m){
+      const c = createCard("Ajouter une Prestation", "Créez une offre de service personnalisée au catalogue");
+      c.innerHTML += `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Catégorie</label>
+            <input id="pr_cat" placeholder="ex: Server Setup, Bots..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Nom de la prestation *</label>
+            <input id="pr_name" placeholder="ex: Offre Starter" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Prix (€)</label>
+            <input id="pr_price" type="number" step="0.5" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Description</label>
+            <input id="pr_desc" placeholder="Détails du service inclus" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+        <div class="flex justify-end mt-4">
+          <button id="btn-add-prod" class="bg-gradient-to-r from-brand-500 to-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 hover:opacity-90 shadow-md shadow-brand-500/20">
+            <i data-lucide="plus" class="w-4 h-4"></i> Enregistrer au catalogue
+          </button>
+        </div>
+      `;
+
+      c.querySelector("#btn-add-prod").onclick = () => {
+        const name = document.getElementById("pr_name").value.trim();
+        if(!name) return showToast("Le nom de la prestation est requis.", "error");
+
+        state.products.push({
+          id: uid("p"),
+          cat: document.getElementById("pr_cat").value.trim() || "Autre",
+          name,
+          price: Number(document.getElementById("pr_price").value) || 0,
+          desc: document.getElementById("pr_desc").value.trim()
+        });
+        save();
+        render();
+        showToast("Prestation ajoutée au catalogue", "success");
+      };
+      m.appendChild(c);
+
+      // Grouper par catégorie
+      const byCat = {};
+      state.products.forEach(p => { (byCat[p.cat] = byCat[p.cat] || []).push(p); });
+
+      Object.entries(byCat).forEach(([cat, items]) => {
+        const cc = createCard(cat, `${items.length} prestation(s) disponible(s)`);
+        const wrap = document.createElement("div"); 
+        wrap.className = "overflow-x-auto";
+        
+        let rows = `
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
+                <th class="py-3 px-3">Prestation / Description</th>
+                <th class="py-3 px-3 w-32">Prix (€)</th>
+                <th class="py-3 px-3 text-right w-20">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/50">
+        `;
+
+        items.forEach(p => {
+          rows += `
+            <tr class="hover:bg-slate-800/30 transition-colors">
+              <td class="py-3 px-3">
+                <div class="font-bold text-slate-200">${p.name}</div>
+                ${p.desc ? `<div class="text-[11px] text-slate-400 mt-0.5">${p.desc}</div>` : ""}
+              </td>
+              <td class="py-3 px-3">
+                <input type="number" step="0.5" data-id="${p.id}" value="${p.price}" class="priceEdit bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-brand-300 font-semibold w-24 focus:outline-none focus:border-brand-500">
+              </td>
+              <td class="py-3 px-3 text-right">
+                <button data-id="${p.id}" class="delP text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all">
+                  <i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+
+        rows += `</tbody></table>`;
+        wrap.innerHTML = rows;
+        cc.appendChild(wrap);
+        m.appendChild(cc);
+
+        cc.querySelectorAll(".priceEdit").forEach(i => i.onchange = e => {
+          const prod = state.products.find(p => p.id === e.target.dataset.id);
+          if(prod) {
+            prod.price = Number(e.target.value) || 0;
+            save();
+          }
+        });
+
+        cc.querySelectorAll(".delP").forEach(b => b.onclick = e => {
+          const id = e.target.closest('button').dataset.id;
+          if(confirm("Supprimer cette prestation ?")) {
+            state.products = state.products.filter(p => p.id !== id);
+            save();
+            render();
+          }
+        });
+      });
+    }
+
+    /* ==========================================================================
+       4. DEVIS
+       ========================================================================== */
+    function quoteTotal(q){ return q.items.reduce((a,it)=>a+it.price*it.qty,0)*(1-(q.discount||0)/100); }
+
+    function renderDevis(m){
+      if(!state.clients.length){
+        const c0 = createCard("Nouveau devis");
+        c0.innerHTML += `<div class="p-6 text-center text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl">Veuillez d'abord ajouter au moins un client dans l'onglet CRM.</div>`;
+        m.appendChild(c0);
+      } else {
+        const c = createCard("Créer un Devis", "Sélectionnez les articles du catalogue pour composer votre devis");
+        c.innerHTML += `
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Client *</label>
+              <select id="q_client" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                ${state.clients.map(cl => `<option value="${cl.id}">${cl.name} ${cl.company?`(${cl.company})`:''}</option>`).join("")}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Remise globale (%)</label>
+              <input id="q_discount" type="number" min="0" max="100" value="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Date d'expiration</label>
+              <input id="q_exp" type="date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+
+          <!-- Catalog items picker -->
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-400 mb-2">Ajouter depuis le catalogue :</label>
+            <div id="q_catalog" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-slate-950/60 rounded-xl border border-slate-800"></div>
+          </div>
+
+          <!-- Cart items list -->
+          <div class="mb-4">
+            <label class="block text-xs font-semibold text-slate-400 mb-2">Articles sélectionnés dans ce devis :</label>
+            <div id="q_cart" class="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-800 min-h-[80px]"></div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
+            <div id="q_totalLine" class="text-sm font-bold text-slate-200">Total : €0.00</div>
+            <button id="btn-create-quote" class="bg-gradient-to-r from-brand-500 to-cyan-500 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:opacity-90 shadow-md shadow-brand-500/20 w-full sm:w-auto justify-center">
+              <i data-lucide="file-plus" class="w-4 h-4"></i> Générer le devis
+            </button>
+          </div>
+        `;
+
+        let cart = [];
+        const catBox = c.querySelector("#q_catalog");
+
+        state.products.forEach(p => {
+          const b = document.createElement("button");
+          b.className = "text-left text-xs bg-slate-900 border border-slate-800 hover:border-brand-500/50 hover:bg-slate-800 text-slate-300 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2";
+          b.type = "button";
+          b.innerHTML = `<i data-lucide="plus-circle" class="w-3.5 h-3.5 text-brand-400"></i><span>${p.name}</span> <span class="font-bold text-brand-300">${eur(p.price)}</span>`;
+          b.onclick = () => {
+            const ex = cart.find(l => l.pid === p.id);
+            if(ex) ex.qty++; else cart.push({pid: p.id, qty: 1});
+            renderCart();
+          };
+          catBox.appendChild(b);
+        });
+
+        function renderCart(){
+          const box = c.querySelector("#q_cart");
+          box.innerHTML = "";
+          if(!cart.length){
+            box.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">Votre devis ne contient aucun article. Cliquez sur une prestation ci-dessus.</p>`;
+          }
+
+          let total = 0;
+          cart.forEach((l, i) => {
+            const p = state.products.find(x => x.id === l.pid);
+            if(!p) return;
+            total += p.price * l.qty;
+
+            const row = document.createElement("div");
+            row.className = "flex items-center justify-between gap-3 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 text-xs";
+            row.innerHTML = `
+              <div class="flex-1 font-semibold text-slate-200">${p.name}</div>
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400">Qté:</span>
+                <input class="cartQty bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-xs text-slate-200 w-16 focus:outline-none focus:border-brand-500" type="number" min="1" value="${l.qty}">
+              </div>
+              <div class="font-bold text-brand-300 w-24 text-right">${eur(p.price * l.qty)}</div>
+              <button class="rmC text-rose-400 hover:text-rose-300 p-1 rounded hover:bg-rose-500/10" type="button">
+                <i data-lucide="x" class="w-4 h-4 pointer-events-none"></i>
+              </button>
+            `;
+
+            row.querySelector(".cartQty").onchange = e => {
+              l.qty = Math.max(1, Number(e.target.value) || 1);
+              renderCart();
+            };
+            row.querySelector(".rmC").onclick = () => {
+              cart.splice(i, 1);
+              renderCart();
+            };
+            box.appendChild(row);
+          });
+
+          const discount = Number(c.querySelector("#q_discount").value) || 0;
+          const finalTotal = total * (1 - discount / 100);
+          c.querySelector("#q_totalLine").innerHTML = `Montant Total : <span class="text-brand-400 text-base">${eur(finalTotal)}</span> ${discount ? `<span class="text-xs font-normal text-slate-400">(Remise de ${discount}% appliquée)</span>` : ''}`;
+          lucide.createIcons();
+        }
+
+        c.querySelector("#q_discount").addEventListener("input", renderCart);
+        renderCart();
+
+        c.querySelector("#btn-create-quote").onclick = () => {
+          if(!cart.length) return showToast("Veuillez ajouter au moins une prestation au devis.", "error");
+
+          const items = cart.map(l => {
+            const p = state.products.find(x => x.id === l.pid);
+            return { name: p.name, price: p.price, qty: l.qty };
+          });
+
+          state.quotes.push({
+            id: uid("DEV-"),
+            clientId: document.getElementById("q_client").value,
+            items,
+            discount: Number(document.getElementById("q_discount").value) || 0,
+            date: today(),
+            expiry: document.getElementById("q_exp").value,
+            status: "Brouillon"
+          });
+          save();
+          render();
+          showToast("Devis généré avec succès !", "success");
+        };
+
+        m.appendChild(c);
+      }
+
+      // Historique des devis
+      const list = createCard("Devis Générés", "Suivez l'état et la conversion de vos devis en commandes");
+      const wrap = document.createElement("div"); 
+      wrap.className = "overflow-x-auto";
+      
+      let rows = `
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
+              <th class="py-3 px-3">N° Devis</th>
+              <th class="py-3 px-3">Client</th>
+              <th class="py-3 px-3">Date</th>
+              <th class="py-3 px-3">Total</th>
+              <th class="py-3 px-3">Statut</th>
+              <th class="py-3 px-3 text-right">Action / Conversion</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/50">
+      `;
+
+      state.quotes.slice().reverse().forEach(q => {
+        const cl = state.clients.find(c => c.id === q.clientId);
+        rows += `
+          <tr class="hover:bg-slate-800/30 transition-colors">
+            <td class="py-3 px-3 font-mono font-bold text-brand-300">${q.id}</td>
+            <td class="py-3 px-3 text-slate-200 font-semibold">${cl ? cl.name : "Client Inconnu"}</td>
+            <td class="py-3 px-3 text-slate-400 font-mono text-[11px]">${q.date}</td>
+            <td class="py-3 px-3 font-bold text-slate-100">${eur(quoteTotal(q))}</td>
+            <td class="py-3 px-3">
+              <select class="qStat bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:border-brand-500" data-id="${q.id}">
+                ${QUOTE_STATUSES.map(s => `<option ${s===q.status?"selected":""}>${s}</option>`).join("")}
+              </select>
+            </td>
+            <td class="py-3 px-3 text-right">
+              ${q.status === "Accepté" && !q.converted 
+                ? `<button class="convQ bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 px-3 py-1 rounded-lg text-xs font-bold transition-all" data-id="${q.id}">→ Transformer en Commande</button>` 
+                : (q.converted ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Converti</span>` : "—")}
+              <button class="sendQMail text-brand-400 hover:text-brand-300 p-1.5 rounded-lg hover:bg-brand-500/10 transition-all ml-1" data-id="${q.id}" title="Envoyer par E-mail">
+                <i data-lucide="mail" class="w-4 h-4 pointer-events-none"></i>
+              </button>
+              <button class="downloadQPDF text-cyan-400 hover:text-cyan-300 p-1.5 rounded-lg hover:bg-cyan-500/10 transition-all ml-1" data-id="${q.id}" title="Télécharger le devis en PDF">
+                <i data-lucide="download" class="w-4 h-4 pointer-events-none"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      rows += `</tbody></table>`;
+      wrap.innerHTML = rows;
+      list.appendChild(wrap);
+
+      if(!state.quotes.length) {
+        list.innerHTML += `<p class="text-xs text-slate-500 italic py-6 text-center">Aucun devis généré pour le moment.</p>`;
+      }
+      m.appendChild(list);
+
+      list.querySelectorAll(".downloadQPDF").forEach(b => b.onclick = e => {
+        const qId = e.target.closest("button").dataset.id;
+        const q = state.quotes.find(x => x.id === qId);
+        if(!q) return;
+        const cl = state.clients.find(c => c.id === q.clientId);
+        downloadPDF(quoteTemplateHTML(q, cl), `Devis_${q.id}.pdf`);
+      });
+
+      list.querySelectorAll(".qStat").forEach(s => s.onchange = e => {
+        const q = state.quotes.find(x => x.id === e.target.dataset.id);
+        if(q) {
+          q.status = e.target.value;
+          save();
+          render();
+        }
+      });
+
+      list.querySelectorAll(".convQ").forEach(b => b.onclick = e => {
+        const q = state.quotes.find(x => x.id === e.target.dataset.id);
+        if(!q) return;
+
+        state.orders.push({
+          id: uid("CMD-"),
+          clientId: q.clientId,
+          quoteId: q.id,
+          items: q.items,
+          price: quoteTotal(q),
+          date: today(),
+          deadline: "",
+          priority: "Normale",
+          desc: "",
+          paymentStatus: "Non payé",
+          status: "Nouvelle commande",
+          steps: makeDefaultSteps()
+        });
+
+        q.converted = true;
+        save();
+        render();
+        showToast(`Commande créée depuis le devis ${q.id}`, "success");
+      });
+
+      list.querySelectorAll(".sendQMail").forEach(b => b.onclick = e => {
+        const qId = e.target.closest('button').dataset.id;
+        active = "Emails";
+        render();
+        setTimeout(() => {
+          const sel = document.getElementById("em_quote_select");
+          if(sel) { sel.value = qId; sel.dispatchEvent(new Event('change')); }
+        }, 50);
+      });
+    }
+
+    /* ==========================================================================
+       5. COMMANDES
+       ========================================================================== */
+    function renderCommandes(m){
+      const list = createCard("Suivi des Commandes & Projets", "Gérez les statuts de livraison et la facturation");
+      const wrap = document.createElement("div"); 
+      wrap.className = "overflow-x-auto";
+      
+      let rows = `
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
+              <th class="py-3 px-3">N° Commande</th>
+              <th class="py-3 px-3">Client</th>
+              <th class="py-3 px-3">Prix</th>
+              <th class="py-3 px-3">Statut Production</th>
+              <th class="py-3 px-3">Paiement</th>
+              <th class="py-3 px-3">Suivi du projet</th>
+              <th class="py-3 px-3 text-right">Facturation</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/50">
+      `;
+
+      state.orders.slice().reverse().forEach(o => {
+        const cl = state.clients.find(c => c.id === o.clientId);
+        const steps = ensureOrderSteps(o);
+        const doneCount = steps.filter(s => s.done).length;
+        const pct = steps.length ? Math.round((doneCount / steps.length) * 100) : 0;
+        const isOpen = expandedOrders.has(o.id);
+        rows += `
+          <tr class="hover:bg-slate-800/30 transition-colors">
+            <td class="py-3 px-3 font-mono font-bold text-purple-400">${o.id}</td>
+            <td class="py-3 px-3 text-slate-200 font-semibold">${cl ? cl.name : "Client Inconnu"}</td>
+            <td class="py-3 px-3 font-bold text-slate-100">${eur(o.price)}</td>
+            <td class="py-3 px-3">
+              <select class="oStat bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:border-brand-500" data-id="${o.id}">
+                ${ORDER_STATUSES.map(s => `<option ${s===o.status?"selected":""}>${s}</option>`).join("")}
+              </select>
+            </td>
+            <td class="py-3 px-3">
+              <select class="oPay bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-none focus:border-brand-500" data-id="${o.id}">
+                <option ${o.paymentStatus==="Non payé"?"selected":""}>Non payé</option>
+                <option ${o.paymentStatus==="Partiel"?"selected":""}>Partiel</option>
+                <option ${o.paymentStatus==="Payé"?"selected":""}>Payé</option>
+              </select>
+            </td>
+            <td class="py-3 px-3 min-w-[140px]">
+              <button class="toggleSteps flex items-center gap-2 w-full group" data-id="${o.id}">
+                <div class="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div class="h-full rounded-full ${pct===100 ? 'bg-emerald-400' : 'bg-brand-500'} transition-all" style="width:${pct}%"></div>
+                </div>
+                <span class="text-[10px] font-semibold text-slate-400 group-hover:text-slate-200 whitespace-nowrap">${doneCount}/${steps.length}</span>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-200 transition-transform ${isOpen ? 'rotate-180' : ''}"></i>
+              </button>
+            </td>
+            <td class="py-3 px-3 text-right">
+              ${o.invoiced 
+                ? `<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Facturée</span>` 
+                : `<button class="mkInv bg-brand-500/10 text-brand-300 border border-brand-500/20 hover:bg-brand-500/20 px-3 py-1 rounded-lg text-xs font-bold transition-all" data-id="${o.id}">+ Générer Facture</button>`}
+            </td>
+          </tr>
+          <tr class="stepsRow ${isOpen ? '' : 'hidden'}" data-steps-for="${o.id}">
+            <td colspan="7" class="bg-slate-950/50 px-4 py-4">
+              <div class="flex flex-col gap-2 max-w-xl">
+                ${steps.map(s => `
+                  <div class="flex items-center gap-2.5 group/step">
+                    <input type="checkbox" class="stepCheck w-4 h-4 rounded border-slate-700 bg-slate-900 text-brand-500 focus:ring-brand-500 cursor-pointer" data-order="${o.id}" data-step="${s.id}" ${s.done ? "checked" : ""}>
+                    <span class="flex-1 text-xs ${s.done ? 'text-slate-500 line-through' : 'text-slate-200'}">${s.label}</span>
+                    <button class="delStep opacity-0 group-hover/step:opacity-100 text-slate-600 hover:text-rose-400 transition-all" data-order="${o.id}" data-step="${s.id}" title="Supprimer l'étape">
+                      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                `).join("")}
+                <form class="addStepForm flex items-center gap-2 mt-1" data-order="${o.id}">
+                  <input type="text" placeholder="Ajouter une étape..." class="newStepInput flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500" />
+                  <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all">Ajouter</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      rows += `</tbody></table>`;
+      wrap.innerHTML = rows;
+      list.appendChild(wrap);
+
+      if(!state.orders.length) {
+        list.innerHTML += `<p class="text-xs text-slate-500 italic py-6 text-center">Aucune commande en cours. Créez et validez un devis d'abord.</p>`;
+      }
+      m.appendChild(list);
+
+      list.querySelectorAll(".oStat").forEach(s => s.onchange = e => {
+        const o = state.orders.find(x => x.id === e.target.dataset.id);
+        if(o) { o.status = e.target.value; save(); }
+      });
+
+      list.querySelectorAll(".oPay").forEach(s => s.onchange = e => {
+        const o = state.orders.find(x => x.id === e.target.dataset.id);
+        if(o) { o.paymentStatus = e.target.value; save(); }
+      });
+
+      list.querySelectorAll(".mkInv").forEach(b => b.onclick = e => {
+        const o = state.orders.find(x => x.id === e.target.dataset.id);
+        if(!o) return;
+
+        const due = new Date();
+        due.setDate(due.getDate() + 14);
+
+        state.invoices.push({
+          id: uid("FAC-"),
+          orderId: o.id,
+          clientId: o.clientId,
+          items: o.items,
+          total: o.price,
+          dateIssued: today(),
+          dueDate: due.toISOString().slice(0,10),
+          status: "Impayée"
+        });
+
+        o.invoiced = true;
+        save();
+        render();
+        showToast(`Facture créée pour la commande ${o.id}`, "success");
+      });
+
+      // Suivi de projet (mini-Kanban par étapes)
+      list.querySelectorAll(".toggleSteps").forEach(b => b.onclick = e => {
+        const id = e.currentTarget.dataset.id;
+        if(expandedOrders.has(id)) expandedOrders.delete(id);
+        else expandedOrders.add(id);
+        render();
+      });
+
+      list.querySelectorAll(".stepCheck").forEach(cb => cb.onchange = e => {
+        const o = state.orders.find(x => x.id === e.target.dataset.order);
+        if(!o) return;
+        const step = ensureOrderSteps(o).find(s => s.id === e.target.dataset.step);
+        if(step) { step.done = e.target.checked; save(true); render(); }
+      });
+
+      list.querySelectorAll(".delStep").forEach(b => b.onclick = e => {
+        const o = state.orders.find(x => x.id === e.currentTarget.dataset.order);
+        if(!o) return;
+        o.steps = ensureOrderSteps(o).filter(s => s.id !== e.currentTarget.dataset.step);
+        save(true);
+        render();
+      });
+
+      list.querySelectorAll(".addStepForm").forEach(f => f.onsubmit = e => {
+        e.preventDefault();
+        const o = state.orders.find(x => x.id === e.currentTarget.dataset.order);
+        if(!o) return;
+        const input = e.currentTarget.querySelector(".newStepInput");
+        const label = input.value.trim();
+        if(!label) return;
+        ensureOrderSteps(o).push({ id: uid("step-"), label, done: false });
+        expandedOrders.add(o.id);
+        save(true);
+        render();
+      });
+    }
+
+    /* ==========================================================================
+       6. FACTURES
+       ========================================================================== */
+    function renderFactures(m){
+      const list = createCard("Gestion des Factures", "Consultez, imprimez et suivez le paiement de vos factures");
+      const wrap = document.createElement("div"); 
+      wrap.className = "overflow-x-auto";
+      
+      let rows = `
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
+              <th class="py-3 px-3">N° Facture</th>
+              <th class="py-3 px-3">Client</th>
+              <th class="py-3 px-3">Total</th>
+              <th class="py-3 px-3">Émise le</th>
+              <th class="py-3 px-3">Échéance</th>
+              <th class="py-3 px-3">Statut</th>
+              <th class="py-3 px-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/50">
+      `;
+
+      state.invoices.slice().reverse().forEach(inv => {
+        const cl = state.clients.find(c => c.id === inv.clientId);
+        const statusColors = {
+          "Payée": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+          "Partiellement payée": "bg-amber-500/10 text-amber-400 border-amber-500/20",
+          "Impayée": "bg-rose-500/10 text-rose-400 border-rose-500/20"
+        };
+
+        rows += `
+          <tr class="hover:bg-slate-800/30 transition-colors">
+            <td class="py-3 px-3 font-mono font-bold text-cyan-300">${inv.id}</td>
+            <td class="py-3 px-3 text-slate-200 font-semibold">${cl ? cl.name : "Client Inconnu"}</td>
+            <td class="py-3 px-3 font-bold text-slate-100">${eur(inv.total)}</td>
+            <td class="py-3 px-3 text-slate-400 font-mono text-[11px]">${inv.dateIssued}</td>
+            <td class="py-3 px-3 text-slate-400 font-mono text-[11px]">${inv.dueDate}</td>
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${statusColors[inv.status] || statusColors['Impayée']}">${inv.status}</span>
+            </td>
+            <td class="py-3 px-3 text-right space-x-1">
+              ${inv.status !== "Payée" 
+                ? `<button class="payInv bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all" data-id="${inv.id}">Marquer Payée</button>` 
+                : ""}
+              <button class="sendInvMail text-amber-400 hover:text-amber-300 p-1.5 rounded-lg hover:bg-amber-500/10 transition-all inline-flex items-center gap-1" data-id="${inv.id}" title="Envoyer relance/email">
+                <i data-lucide="mail" class="w-4 h-4 pointer-events-none"></i>
+              </button>
+              <button class="printInv bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all" data-id="${inv.id}">
+                <i data-lucide="printer" class="w-3.5 h-3.5 inline mr-1 pointer-events-none"></i> Imprimer
+              </button>
+              <button class="downloadInvPDF bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 hover:bg-cyan-500/20 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all" data-id="${inv.id}">
+                <i data-lucide="download" class="w-3.5 h-3.5 inline mr-1 pointer-events-none"></i> PDF
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      rows += `</tbody></table>`;
+      wrap.innerHTML = rows;
+      list.appendChild(wrap);
+
+      if(!state.invoices.length) {
+        list.innerHTML += `<p class="text-xs text-slate-500 italic py-6 text-center">Aucune facture émise pour le moment.</p>`;
+      }
+      m.appendChild(list);
+
+      list.querySelectorAll(".payInv").forEach(b => b.onclick = e => {
+        const inv = state.invoices.find(x => x.id === e.target.dataset.id);
+        if(!inv) return;
+
+        inv.status = "Payée";
+        state.transactions.push({
+          id: uid("tx"),
+          type: "revenu",
+          amount: inv.total,
+          date: today(),
+          category: "Facture Client",
+          clientId: inv.clientId,
+          method: "Virement / CB",
+          description: `Paiement reçu pour ${inv.id}`
+        });
+
+        const o = state.orders.find(x => x.id === inv.orderId);
+        if(o) o.paymentStatus = "Payé";
+
+        save();
+        render();
+        showToast(`Facture ${inv.id} encaissée et archivée dans les finances`, "success");
+      });
+
+      list.querySelectorAll(".downloadInvPDF").forEach(b => b.onclick = e => {
+        const invId = e.target.closest("button").dataset.id;
+        const inv = state.invoices.find(x => x.id === invId);
+        if(!inv) return;
+        const cl = state.clients.find(c => c.id === inv.clientId);
+        downloadPDF(invoiceTemplateHTML(inv, cl), `Facture_${inv.id}.pdf`);
+      });
+
+      list.querySelectorAll(".sendInvMail").forEach(b => b.onclick = e => {
+        const invId = e.target.closest('button').dataset.id;
+        active = "Emails";
+        render();
+        setTimeout(() => {
+          const typeSel = document.getElementById("em_template_type");
+          if(typeSel) { typeSel.value = "invoice_reminder"; typeSel.dispatchEvent(new Event('change')); }
+          const invSel = document.getElementById("em_invoice_select");
+          if(invSel) { invSel.value = invId; invSel.dispatchEvent(new Event('change')); }
+        }, 50);
+      });
+
+      // Template Impression Facture Haut de Gamme
+      list.querySelectorAll(".printInv").forEach(b => b.onclick = e => {
+        const inv = state.invoices.find(x => x.id === e.target.dataset.id);
+        if(!inv) return;
+
+        const cl = state.clients.find(c => c.id === inv.clientId);
+        const w = window.open("", "_blank");
+
+        w.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Facture ${inv.id}</title>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1e293b; padding: 40px; margin: 0; background: #fff; line-height: 1.5; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; }
+              .logo { font-size: 24px; font-weight: 800; color: #0284c7; letter-spacing: -0.5px; }
+              .title { font-size: 28px; font-weight: 800; color: #0f172a; text-align: right; }
+              .details { display: flex; justify-content: space-between; margin-bottom: 40px; }
+              .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px 20px; width: 45%; }
+              .box-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+              th { background: #f1f5f9; font-size: 11px; text-transform: uppercase; color: #475569; padding: 10px; text-align: left; border-bottom: 1px solid #cbd5e1; }
+              td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #334155; }
+              .total-box { font-size: 18px; font-weight: 800; color: #0f172a; text-align: right; margin-top: 20px; border-top: 2px solid #0f172a; padding-top: 10px; }
+              .footer { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <div class="logo">NEXUS Business</div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Services & Solutions Digitales</div>
+              </div>
+              <div>
+                <div class="title">FACTURE</div>
+                <div style="font-size: 13px; color: #64748b; text-align: right; font-weight: 600;"># ${inv.id}</div>
+              </div>
+            </div>
+
+            <div class="details">
+              <div class="box">
+                <div class="box-title">Facturé à :</div>
+                <div style="font-weight: 700; font-size: 14px;">${cl ? cl.name : "Client Inconnu"}</div>
+                ${cl && cl.company ? `<div>${cl.company}</div>` : ""}
+                ${cl && cl.email ? `<div>${cl.email}</div>` : ""}
+              </div>
+              <div class="box">
+                <div class="box-title">Informations de règlement :</div>
+                <div><strong>Date d'émission :</strong> ${inv.dateIssued}</div>
+                <div><strong>Date d'échéance :</strong> ${inv.dueDate}</div>
+                <div><strong>Statut :</strong> ${inv.status}</div>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Désignation de la prestation</th>
+                  <th style="text-align: center;">Quantité</th>
+                  <th style="text-align: right;">Prix unitaire</th>
+                  <th style="text-align: right;">Total HT</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${inv.items.map(it => `
+                  <tr>
+                    <td>${it.name}</td>
+                    <td style="text-align: center;">${it.qty}</td>
+                    <td style="text-align: right;">${eur(it.price)}</td>
+                    <td style="text-align: right;">${eur(it.price * it.qty)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="total-box">
+              Total à payer : ${eur(inv.total)}
+            </div>
+
+            <div class="footer">
+              NEXUS Business Suite • Merci de votre confiance • Contact : waoxo@icebeg-review.com
+            </div>
+            <script>window.print();<\/script>
+          </body>
+          </html>
+        `);
+        w.document.close();
+      });
+    }
+
+    /* ==========================================================================
+       7. FINANCE
+       ========================================================================== */
+    function renderFinance(m){
+      const c = createCard("Enregistrer une Transaction", "Saisissez les mouvements de trésorerie entrants et sortants");
+      c.innerHTML += `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Type de flux *</label>
+            <select id="t_type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="revenu">Revenu (+)</option>
+              <option value="dépense">Dépense (-)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Montant (€) *</label>
+            <input id="t_amount" type="number" step="0.01" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Date</label>
+            <input id="t_date" type="date" value="${today()}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Catégorie</label>
+            <input id="t_cat" placeholder="ex: Logiciels, Matériel, Vente..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Client associé</label>
+            <select id="t_client" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">— Aucun —</option>
+              ${state.clients.map(cl => `<option value="${cl.id}">${cl.name}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Moyen de paiement</label>
+            <input id="t_method" placeholder="ex: Stripe, Paypal, Virement" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <button id="btn-add-tx" class="bg-gradient-to-r from-brand-500 to-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 hover:opacity-90 shadow-md shadow-brand-500/20">
+            <i data-lucide="plus" class="w-4 h-4"></i> Valider l'opération
+          </button>
+        </div>
+      `;
+
+      c.querySelector("#btn-add-tx").onclick = () => {
+        const amount = Number(document.getElementById("t_amount").value);
+        if(!amount) return showToast("Veuillez renseigner un montant valide.", "error");
+
+        state.transactions.push({
+          id: uid("tx"),
+          type: document.getElementById("t_type").value,
+          amount,
+          date: document.getElementById("t_date").value || today(),
+          category: document.getElementById("t_cat").value.trim(),
+          clientId: document.getElementById("t_client").value,
+          method: document.getElementById("t_method").value.trim()
+        });
+
+        save();
+        render();
+        showToast("Transaction ajoutée aux comptes", "success");
+      };
+      m.appendChild(c);
+
+      // Total Synthèse
+      const encaisse = state.transactions.filter(t=>t.type==="revenu").reduce((a,t)=>a+Number(t.amount),0);
+      const depenses = state.transactions.filter(t=>t.type==="dépense").reduce((a,t)=>a+Number(t.amount),0);
+      
+      const sum = createCard("Bilan Financier Global");
+      sum.innerHTML += `
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10">
+            <div class="text-xs font-semibold text-emerald-400 uppercase">Recettes Encaissées</div>
+            <div class="text-2xl font-black text-slate-100 mt-1">${eur(encaisse)}</div>
+          </div>
+          <div class="p-4 rounded-xl border border-rose-500/20 bg-rose-500/10">
+            <div class="text-xs font-semibold text-rose-400 uppercase">Dépenses Cumulées</div>
+            <div class="text-2xl font-black text-slate-100 mt-1">${eur(depenses)}</div>
+          </div>
+          <div class="p-4 rounded-xl border border-brand-500/20 bg-brand-500/10">
+            <div class="text-xs font-semibold text-brand-400 uppercase">Résultat Net</div>
+            <div class="text-2xl font-black text-slate-100 mt-1">${eur(encaisse - depenses)}</div>
+          </div>
+        </div>
+      `;
+      m.appendChild(sum);
+
+      // Tableau Transactions
+      const list = createCard("Historique des Opérations");
+      const wrap = document.createElement("div"); 
+      wrap.className = "overflow-x-auto";
+      
+      let rows = `
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
+              <th class="py-3 px-3">Date</th>
+              <th class="py-3 px-3">Type</th>
+              <th class="py-3 px-3">Montant</th>
+              <th class="py-3 px-3">Catégorie</th>
+              <th class="py-3 px-3">Méthode</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/50">
+      `;
+
+      state.transactions.slice().reverse().forEach(t => {
+        const isIncome = t.type === "revenu";
+        rows += `
+          <tr class="hover:bg-slate-800/30 transition-colors">
+            <td class="py-3 px-3 text-slate-400 font-mono text-[11px]">${t.date}</td>
+            <td class="py-3 px-3">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${isIncome ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}">${t.type}</span>
+            </td>
+            <td class="py-3 px-3 font-bold ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">${isIncome ? '+' : '-'}${eur(t.amount)}</td>
+            <td class="py-3 px-3 text-slate-300">${t.category || "—"}</td>
+            <td class="py-3 px-3 text-slate-400">${t.method || "—"}</td>
+          </tr>
+        `;
+      });
+
+      rows += `</tbody></table>`;
+      wrap.innerHTML = rows;
+      list.appendChild(wrap);
+
+      if(!state.transactions.length) {
+        list.innerHTML += `<p class="text-xs text-slate-500 italic py-6 text-center">Aucune transaction enregistrée.</p>`;
+      }
+      m.appendChild(list);
+    }
+
+    /* ==========================================================================
+       8. STATISTIQUES
+       ========================================================================== */
+    function renderStats(m){
+      const c = createCard("Analyse du Chiffre d'Affaires", "Évolution des encaissements mensuels");
+      
+      const caByMonth = {};
+      state.transactions.filter(t => t.type === "revenu").forEach(t => { 
+        const k = (t.date || "").slice(0,7); 
+        caByMonth[k] = (caByMonth[k] || 0) + Number(t.amount); 
+      });
+
+      const months = Object.keys(caByMonth).sort();
+      const max = Math.max(1, ...Object.values(caByMonth));
+
+      if(!months.length) {
+        c.innerHTML += `<p class="text-xs text-slate-500 italic py-6 text-center">Aucun revenu comptabilisé pour analyser la courbe.</p>`;
+      } else {
+        const chartContainer = document.createElement("div");
+        chartContainer.className = "space-y-3 my-2";
+
+        months.forEach(mo => {
+          const val = caByMonth[mo];
+          const pct = Math.min(100, Math.max(5, (val / max) * 100));
+
+          chartContainer.innerHTML += `
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-slate-300 font-mono">${mo}</span>
+                <span class="text-brand-400 font-bold">${eur(val)}</span>
+              </div>
+              <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div class="h-full bg-gradient-to-r from-brand-500 to-cyan-400 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          `;
+        });
+        c.appendChild(chartContainer);
+      }
+      m.appendChild(c);
+
+      // KPI Avancés
+      const avg = state.orders.length ? state.orders.reduce((a,o)=>a+Number(o.price||0),0)/state.orders.length : 0;
+      const won = state.clients.filter(c=>c.stage==="Client gagné").length;
+      const sentQuotes = state.quotes.length;
+      const convRate = sentQuotes ? ((state.quotes.filter(q=>q.status==="Accepté").length / sentQuotes) * 100).toFixed(1) : 0;
+
+      const g = createCard("Indicateurs de Performance (KPI)");
+      g.innerHTML += `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl border border-slate-800 bg-slate-950/60">
+            <div class="text-xs text-slate-400 font-medium">Commandes Totales</div>
+            <div class="text-2xl font-black text-slate-100 mt-1">${state.orders.length}</div>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-800 bg-slate-950/60">
+            <div class="text-xs text-slate-400 font-medium">Panier Moyen</div>
+            <div class="text-2xl font-black text-brand-300 mt-1">${eur(avg)}</div>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-800 bg-slate-950/60">
+            <div class="text-xs text-slate-400 font-medium">Nouveaux Clients</div>
+            <div class="text-2xl font-black text-emerald-400 mt-1">${won}</div>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-800 bg-slate-950/60">
+            <div class="text-xs text-slate-400 font-medium">Taux de Conversion Devis</div>
+            <div class="text-2xl font-black text-cyan-400 mt-1">${convRate}%</div>
+          </div>
+        </div>
+      `;
+      m.appendChild(g);
+    }
+
+    /* ==========================================================================
+       9. MODULE RELANCES & E-MAILS
+       ========================================================================== */
+    function renderEmails(m){
+      const senderEmail = "waoxo@icebeg-review.com";
+      const c = createCard("Générateur de Modèles d'E-mails & Communication", "Créez, personnalisez et envoyez des e-mails et messages Discord pré-remplis");
+      
+      c.innerHTML += `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Type de message</label>
+            <select id="em_template_type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="quote">Envoi de Devis</option>
+              <option value="invoice">Envoi de Facture</option>
+              <option value="invoice_reminder">Relance Facture Impayée</option>
+              <option value="discord">Message Discord Markdown</option>
+            </select>
+          </div>
+
+          <!-- Dynamic selectors according to type -->
+          <div id="box_quote_select">
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Devis concerné</label>
+            <select id="em_quote_select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">— Sélectionner un devis —</option>
+              ${state.quotes.map(q => {
+                const cl = state.clients.find(c => c.id === q.clientId);
+                return `<option value="${q.id}">${q.id} - ${cl ? cl.name : 'Inconnu'} (${eur(quoteTotal(q))})</option>`;
+              }).join("")}
+            </select>
+          </div>
+
+          <div id="box_invoice_select" class="hidden">
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Facture concernée</label>
+            <select id="em_invoice_select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="">— Sélectionner une facture —</option>
+              ${state.invoices.map(inv => {
+                const cl = state.clients.find(c => c.id === inv.clientId);
+                return `<option value="${inv.id}">${inv.id} - ${cl ? cl.name : 'Inconnu'} (${eur(inv.total)} - ${inv.status})</option>`;
+              }).join("")}
+            </select>
+          </div>
+
+          <div id="box_urgency_select" class="hidden">
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Niveau de relance</label>
+            <select id="em_urgency_level" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="courteous">Rappel courtois (Échéance proche)</option>
+              <option value="relance1">Relance n°1 (Échéance dépassée)</option>
+              <option value="relance2">Relance n°2 / Ferme (Mise en demeure)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+          
+          <!-- Edit inputs -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Expéditeur (Votre adresse)</label>
+              <input id="em_sender" type="text" value="${senderEmail}" readonly class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl px-3 py-2 text-xs text-slate-400 font-mono">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Destinataire (Email Client)</label>
+              <input id="em_receiver" type="email" placeholder="client@exemple.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Objet de l'e-mail</label>
+              <input id="em_subject" type="text" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Corps du message (Éditable)</label>
+              <textarea id="em_body" rows="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 font-sans focus:outline-none focus:border-brand-500 leading-relaxed"></textarea>
+            </div>
+          </div>
+
+          <!-- Live Preview & Quick Actions -->
+          <div class="flex flex-col justify-between bg-slate-950/40 p-4 rounded-xl border border-slate-800">
+            <div>
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                <span class="text-xs font-bold text-slate-300 flex items-center gap-2">
+                  <i data-lucide="eye" class="w-4 h-4 text-brand-400"></i> Aperçu du message
+                </span>
+                <span id="em_mode_badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20">Format E-mail</span>
+              </div>
+              
+              <div id="em_preview" class="text-xs text-slate-300 font-mono whitespace-pre-wrap leading-relaxed bg-slate-900/80 p-3 rounded-lg border border-slate-800/80 max-h-[380px] overflow-y-auto">
+                Sélectionnez ou éditez un modèle pour afficher l'aperçu...
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-slate-800">
+              <button id="btn-copy-mail" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all border border-slate-700">
+                <i data-lucide="copy" class="w-4 h-4"></i> Copier le message
+              </button>
+
+              <a id="btn-send-mailto" href="#" target="_blank" class="flex-1 bg-gradient-to-r from-brand-500 to-cyan-500 hover:from-brand-400 hover:to-cyan-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-500/20">
+                <i data-lucide="send" class="w-4 h-4"></i> Ouvrir Client Mail
+              </a>
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      m.appendChild(c);
+
+      const typeSel = c.querySelector("#em_template_type");
+      const qBox = c.querySelector("#box_quote_select");
+      const invBox = c.querySelector("#box_invoice_select");
+      const urgBox = c.querySelector("#box_urgency_select");
+
+      const qSel = c.querySelector("#em_quote_select");
+      const invSel = c.querySelector("#em_invoice_select");
+      const urgSel = c.querySelector("#em_urgency_level");
+
+      const receiverInput = c.querySelector("#em_receiver");
+      const subjectInput = c.querySelector("#em_subject");
+      const bodyInput = c.querySelector("#em_body");
+      const previewDiv = c.querySelector("#em_preview");
+      const modeBadge = c.querySelector("#em_mode_badge");
+      const mailtoBtn = c.querySelector("#btn-send-mailto");
+
+      // Dynamic toggle selector visibility
+      typeSel.onchange = () => {
+        const val = typeSel.value;
+        qBox.classList.toggle("hidden", val !== "quote" && val !== "discord");
+        invBox.classList.toggle("hidden", val !== "invoice" && val !== "invoice_reminder");
+        urgBox.classList.toggle("hidden", val !== "invoice_reminder");
+
+        if(val === "discord") {
+          modeBadge.textContent = "Format Discord MD";
+          modeBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20";
+        } else {
+          modeBadge.textContent = "Format E-mail";
+          modeBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20";
+        }
+        updateTemplateContent();
+      };
+
+      qSel.onchange = updateTemplateContent;
+      invSel.onchange = updateTemplateContent;
+      urgSel.onchange = updateTemplateContent;
+
+      bodyInput.oninput = () => {
+        previewDiv.textContent = bodyInput.value;
+        updateMailtoLink();
+      };
+
+      subjectInput.oninput = updateMailtoLink;
+      receiverInput.oninput = updateMailtoLink;
+
+      function updateTemplateContent() {
+        const type = typeSel.value;
+        let recipientMail = "";
+        let subject = "";
+        let body = "";
+
+        if(type === "quote") {
+          const q = state.quotes.find(x => x.id === qSel.value);
+          const cl = q ? state.clients.find(c => c.id === q.clientId) : null;
+          recipientMail = cl ? (cl.email || "") : "";
+          const clientName = cl ? cl.name : "Client";
+          const total = q ? eur(quoteTotal(q)) : "0 €";
+
+          subject = `NEXUS — Votre devis ${q ? q.id : ''}`;
+          body = `Bonjour ${clientName},\n\nVeuillez trouver ci-joint les détails de votre devis ${q ? q.id : ''} pour un montant total de ${total}.\n\nPrestations incluses :\n${q ? q.items.map(i => `- ${i.name} (x${i.qty}) : ${eur(i.price * i.qty)}`).join('\n') : '- Détails des prestations'}\n\nCe devis reste valable jusqu'au ${q && q.expiry ? q.expiry : 'date d\'expiration'}.\nN'hésitez pas à revenir vers nous pour toute question ou validation.\n\nCordialement,\nL'équipe NEXUS\nContact : ${senderEmail}`;
+        
+        } else if(type === "invoice") {
+          const inv = state.invoices.find(x => x.id === invSel.value);
+          const cl = inv ? state.clients.find(c => c.id === inv.clientId) : null;
+          recipientMail = cl ? (cl.email || "") : "";
+          const clientName = cl ? cl.name : "Client";
+
+          subject = `NEXUS — Facture ${inv ? inv.id : ''}`;
+          body = `Bonjour ${clientName},\n\nVotre commande a bien été traitée. Veuillez trouver votre facture ${inv ? inv.id : ''} d'un montant de ${inv ? eur(inv.total) : '0 €'}.\n\nDate d'échéance de paiement : ${inv ? inv.dueDate : 'A réception'}.\n\nNous vous remercions de votre confiance.\n\nCordialement,\nNEXUS Business\n${senderEmail}`;
+        
+        } else if(type === "invoice_reminder") {
+          const inv = state.invoices.find(x => x.id === invSel.value);
+          const cl = inv ? state.clients.find(c => c.id === inv.clientId) : null;
+          recipientMail = cl ? (cl.email || "") : "";
+          const clientName = cl ? cl.name : "Client";
+          const level = urgSel.value;
+
+          if(level === "courteous") {
+            subject = `Rappel amical : Facture ${inv ? inv.id : ''} - NEXUS`;
+            body = `Bonjour ${clientName},\n\nSauf erreur de notre part, la facture ${inv ? inv.id : ''} d'un montant de ${inv ? eur(inv.total) : '0 €'} arrivée à échéance le ${inv ? inv.dueDate : ''} reste non réglée à ce jour.\n\nNous vous invitons à procéder à son règlement dans les meilleurs délais.\nSi votre paiement a déjà été envoyé, merci de ne pas tenir compte de ce message.\n\nCordialement,\nNEXUS\n${senderEmail}`;
+          } else if(level === "relance1") {
+            subject = `RELANCE : Impayé Facture ${inv ? inv.id : ''} - NEXUS`;
+            body = `Bonjour ${clientName},\n\nMalgré notre première relance, nous constatons que la facture ${inv ? inv.id : ''} (${inv ? eur(inv.total) : '0 €'}) venant à échéance le ${inv ? inv.dueDate : ''} n'a toujours pas été régularisée.\n\nNous vous prions de bien vouloir effectuer le règlement dans un délai de 48 heures.\n\nRestant à votre disposition pour tout justificatif.\n\nCordialement,\nService Comptabilité NEXUS\n${senderEmail}`;
+          } else {
+            subject = `DERNIER AVIS AVANT RECOUVREMENT : Facture ${inv ? inv.id : ''}`;
+            body = `Madame, Monsieur ${clientName},\n\nSauf règlement sous 24h de la facture ${inv ? inv.id : ''} d'un montant de ${inv ? eur(inv.total) : '0 €'}, nous nous verrons contraints d'interrompre immédiatement nos prestations et de transmettre le dossier au service recouvrement.\n\nMerci de procéder immédiatement au virement.\n\nService Contentieux NEXUS\nContact : ${senderEmail}`;
+          }
+
+        } else if(type === "discord") {
+          const q = state.quotes.find(x => x.id === qSel.value);
+          const cl = q ? state.clients.find(c => c.id === q.clientId) : null;
+          const clientName = cl ? (cl.discord ? `@${cl.discord}` : cl.name) : "Client";
+          const total = q ? eur(quoteTotal(q)) : "0 €";
+
+          subject = `[DISCORD DM] Proposition Devis / Commande ${q ? q.id : ''}`;
+          body = `👋 **Hello ${clientName} !**\n\nVoici le récapitulatif de votre commande NEXUS :\n\n📌 **Devis n°** : \`${q ? q.id : 'DEV-XXX'}\`\n💰 **Montant total** : \`${total}\`\n\n🛠 **Détail des prestations** :\n\`\`\`\n${q ? q.items.map(i => `• ${i.name} (x${i.qty}) -> ${eur(i.price * i.qty)}`).join('\n') : '• Prestation Discord Setup / Bot'}\n\`\`\`\n\nPour valider cette commande ou si tu as des questions, réponds directement à ce message ou contacte-nous par email : \`${senderEmail}\` !`;
+        }
+
+        receiverInput.value = recipientMail;
+        subjectInput.value = subject;
+        bodyInput.value = body;
+        previewDiv.textContent = body;
+        updateMailtoLink();
+      }
+
+      function updateMailtoLink() {
+        const to = encodeURIComponent(receiverInput.value);
+        const sub = encodeURIComponent(subjectInput.value);
+        const body = encodeURIComponent(bodyInput.value);
+        mailtoBtn.href = `mailto:${to}?subject=${sub}&body=${body}`;
+      }
+
+      // Action Copy
+      c.querySelector("#btn-copy-mail").onclick = () => {
+        const textToCopy = bodyInput.value;
+        if(!textToCopy) return showToast("Aucun texte à copier", "error");
+
+        if(navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(textToCopy);
+        } else {
+          const textarea = document.createElement("textarea");
+          textarea.value = textToCopy;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+        }
+        showToast("Message copié dans le presse-papier !", "success");
+      };
+
+      // Trigger first init
+      updateTemplateContent();
+    }
+
+    /* ==========================================================================
+       10. SAUVEGARDE & PARAMÈTRES
+       ========================================================================== */
+    function renderBackup(m){
+      const c = createCard("Sauvegarde des Données", "Gérez les sauvegardes locales JSON et la synchronisation cloud");
+      c.innerHTML += `
+        <p class="text-xs text-slate-400 mb-6">Vos données sont automatiquement synchronisées en temps réel via Firebase Realtime Database. Vous pouvez également réaliser un export de précaution sous format JSON.</p>
+        
+        <div class="flex flex-wrap gap-4">
+          <button id="btn-export-json" class="bg-gradient-to-r from-brand-500 to-cyan-500 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 hover:opacity-90 transition-all shadow-md shadow-brand-500/20">
+            <i data-lucide="download" class="w-4 h-4"></i> Exporter Sauvegarde (JSON)
+          </button>
+
+          <label class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition-all">
+            <i data-lucide="upload" class="w-4 h-4"></i> Importer un fichier JSON
+            <input id="json-file-input" type="file" accept="application/json" class="hidden">
+          </label>
+        </div>
+      `;
+
+      c.querySelector("#btn-export-json").onclick = () => {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: "application/json" }));
+        a.download = `nexus_backup_${today()}.json`;
+        a.click();
+        showToast("Fichier JSON de sauvegarde généré", "success");
+      };
+
+      c.querySelector("#json-file-input").onchange = e => {
+        const f = e.target.files[0];
+        if(!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            const data = JSON.parse(r.result);
+            if(confirm("Attention : Remplacer l'intégralité des données actuelles par ce fichier ?")) {
+              state = data;
+              save();
+              render();
+              showToast("Restauration réussie !", "success");
+            }
+          } catch(err) {
+            showToast("Fichier JSON invalide.", "error");
+          }
+        };
+        r.readAsText(f);
+      };
+
+      m.appendChild(c);
+
+      // Zone de danger
+      const danger = createCard("Zone de Réinitialisation", "Attention : Les actions ci-dessous sont irréversibles");
+      danger.innerHTML += `
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold text-rose-400">Purger toutes les données</div>
+            <div class="text-[11px] text-slate-500">Supprime définitivement vos clients, devis, prestations et factures.</div>
+          </div>
+          <button id="btn-reset-all" class="bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all">
+            Réinitialiser tout
+          </button>
+        </div>
+      `;
+
+      danger.querySelector("#btn-reset-all").onclick = () => {
+        if(confirm("ÊTES-VOUS SÛR ? Cette action supprimera définitivement l'ensemble de vos données Nexus !")) {
+          state = { clients:[], products: JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)), quotes:[], orders:[], transactions:[], invoices:[] };
+          save();
+          render();
+          showToast("Base de données réinitialisée", "info");
+        }
+      };
+
+      m.appendChild(danger);
+    }
+  </script>
+</body>
+</html>
